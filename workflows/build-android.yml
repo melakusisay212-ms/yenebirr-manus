@@ -1,0 +1,100 @@
+# Yene Birr — Build Android debug APK
+# Triggers on push to main/master, tags, or manual run.
+# Artifact name: yenebirr-debug-apk
+
+name: Build Android APK
+
+on:
+  push:
+    branches: [main, master]
+    tags: ['v*']
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build debug APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Setup Java (Temurin 17)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install npm dependencies
+        run: npm ci || npm install
+
+      - name: Build web assets (Vite)
+        run: npm run build
+
+      - name: Add Android platform if missing
+        run: |
+          if [ ! -d android ]; then
+            npx cap add android
+          fi
+
+      - name: Sync Capacitor (copy web → android)
+        run: npx cap sync android
+
+      - name: Copy launcher icons into Android res
+        run: |
+          if [ -f scripts/setup-native-plugin.cjs ]; then
+            node scripts/setup-native-plugin.cjs || true
+          fi
+          # Fallback icon copy if script partial
+          RES=android/app/src/main/res
+          if [ -d "$RES" ] && [ -d public/icons ]; then
+            mkdir -p "$RES"/mipmap-{mdpi,hdpi,xhdpi,xxhdpi,xxxhdpi}
+            [ -f public/icons/icon-48.png ]  && cp public/icons/icon-48.png  "$RES/mipmap-mdpi/ic_launcher.png"       && cp public/icons/icon-48.png  "$RES/mipmap-mdpi/ic_launcher_round.png"
+            [ -f public/icons/icon-72.png ]  && cp public/icons/icon-72.png  "$RES/mipmap-hdpi/ic_launcher.png"       && cp public/icons/icon-72.png  "$RES/mipmap-hdpi/ic_launcher_round.png"
+            [ -f public/icons/icon-96.png ]  && cp public/icons/icon-96.png  "$RES/mipmap-xhdpi/ic_launcher.png"      && cp public/icons/icon-96.png  "$RES/mipmap-xhdpi/ic_launcher_round.png"
+            [ -f public/icons/icon-144.png ] && cp public/icons/icon-144.png "$RES/mipmap-xxhdpi/ic_launcher.png"     && cp public/icons/icon-144.png "$RES/mipmap-xxhdpi/ic_launcher_round.png"
+            [ -f public/icons/icon-192.png ] && cp public/icons/icon-192.png "$RES/mipmap-xxxhdpi/ic_launcher.png"    && cp public/icons/icon-192.png "$RES/mipmap-xxxhdpi/ic_launcher_round.png"
+          fi
+
+      - name: Make gradlew executable
+        run: chmod +x android/gradlew
+
+      - name: Build debug APK
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Locate APK
+        id: apk
+        run: |
+          APK=$(find android/app/build/outputs/apk -name '*.apk' | head -n 1)
+          echo "path=$APK" >> "$GITHUB_OUTPUT"
+          echo "Found: $APK"
+          ls -la "$APK"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: yenebirr-debug-apk
+          path: ${{ steps.apk.outputs.path }}
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload APK on tag (release asset helper)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: actions/upload-artifact@v4
+        with:
+          name: yenebirr-${{ github.ref_name }}-apk
+          path: ${{ steps.apk.outputs.path }}
+          retention-days: 90

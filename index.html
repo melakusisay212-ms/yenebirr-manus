@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+<meta charset="UTF-8">
+<title>የኔ ብር · Yene Birr</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1F8A4C">
+<meta name="description" content="Yene Birr — Ethiopian calendar personal finance tracker">
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Noto+Sans+Ethiopic:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body data-theme="green">
+<div id="splash">
+  <div class="splash-icon"><img src="/icon-192.png" alt="Yene Birr"></div>
+  <div class="splash-name">የኔ ብር</div>
+  <div class="splash-credit">Developed by Melaku Sisay</div>
+</div>
+<div id="app">
+
+  <!-- ============ HOME ============ -->
+  <div class="screen active" id="screen-home">
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-mark" id="homeIcon"></div>
+        <div>
+          <div class="brand-name amh">የኔ ብር</div>
+          <div class="brand-sub" id="homeGreeting">Good day</div>
+        </div>
+      </div>
+      <div class="icon-btn settings-vis" onclick="go('more')" id="settingsBtn" title="Settings"></div>
+    </div>
+
+    <div class="hero">
+      <div class="hero-top">
+        <div class="hero-label">Total balance · ጠቅላላ ሂሳብ</div>
+      </div>
+      <div class="hero-amount" id="heroBalance">ብር 0.00</div>
+      <div class="hero-row">
+        <div class="hero-pill"><div class="ic-wrap" id="hpIncome"></div><div><div class="l">Income</div><div class="v" id="heroIncome">ብር 0</div></div></div>
+        <div class="hero-pill"><div class="ic-wrap" id="hpExpense"></div><div><div class="l">Expense</div><div class="v" id="heroExpense">ብር 0</div></div></div>
+      </div>
+    </div>
+
+    <div class="quick" id="homeQuick"></div>
+    <div class="card welcome-card" id="homeWelcome"></div>
+    <div class="sect"><h3>Perspective</h3><a onclick="go('analysis')">See details <span id="arrPerspective"></span></a></div>
+    <div class="card perspective-card" id="homePerspective"></div>
+
+    <div class="sect"><h3>This month by category</h3><a onclick="go('analysis')">See analysis <span id="arrAnalysis"></span></a></div>
+    <div class="card" id="homeDonutCard"></div>
+
+    <div class="sect"><h3>Recent transactions</h3><a onclick="go('ledger')">See all <span id="arrLedger"></span></a></div>
+    <div class="card" id="homeRecent"></div>
+  </div>
+
+  <!-- ============ CALENDAR ============ -->
+  <div class="screen" id="screen-calendar">
+    <div class="topbar flush">
+      <div class="screen-title">Calendar · <span class="amh">የቀን መቁጠሪያ</span></div>
+      <div class="icon-btn" onclick="calToday()" id="calTodayBtn"></div>
+    </div>
+    <div class="cal-head">
+      <div class="arrow" onclick="calShift(-1)" id="calPrev"></div>
+      <div class="month"><span id="calMonthAm" class="amh"></span><span class="g" id="calMonthG"></span></div>
+      <div class="arrow" onclick="calShift(1)" id="calNext"></div>
+    </div>
+    <div class="weekdays" id="calWeekdays"></div>
+    <div class="days" id="calGrid"></div>
+
+    <div class="sect"><h3 id="calDayTitle">Select a day</h3></div>
+    <div class="card" id="calDayList"></div>
+  </div>
+
+  <!-- ============ LEDGER ============ -->
+  <div class="screen" id="screen-ledger">
+    <div class="topbar flush">
+      <div class="screen-title">Ledger &amp; Accounts</div>
+      <div class="icon-btn" onclick="openAddAccount()" id="ledgerAddBtn"></div>
+    </div>
+    <div class="acc-scroll" id="accScroll"></div>
+
+    <div class="sect"><h3>Transactions</h3></div>
+    <div class="chiprow" id="ledgerChips"></div>
+    <div class="card" id="ledgerList" style="margin-top:10px;"></div>
+  </div>
+
+  <!-- ============ ANALYSIS ============ -->
+  <div class="screen" id="screen-analysis">
+    <div class="topbar flush">
+      <div class="icon-btn" onclick="analysisShift(-1)" id="analysisPrev"></div>
+      <div class="screen-title amh" id="analysisMonthTitle">Analysis</div>
+      <div class="icon-btn" onclick="analysisShift(1)" id="analysisNext"></div>
+    </div>
+    <div class="analysis-method" id="analysisMethod"></div>
+    <div id="analysisInsights"></div>
+    <div id="analysisWeekly"></div>
+    <div class="card ranking-card">
+      <div class="ranking-head">
+        <div class="ranking-title">Category Ranking</div>
+        <div class="ranking-badge">Expenses</div>
+      </div>
+      <div id="analysisDonut"></div>
+      <div id="analysisRanking"></div>
+    </div>
+    <div class="card" id="analysisExtra" style="margin-top:12px;"></div>
+  </div>
+
+  <!-- ============ MORE / SETTINGS ============ -->
+  <div class="screen" id="screen-more">
+    <div class="topbar flush">
+      <div class="screen-title">Settings</div>
+      <div></div>
+    </div>
+
+    <div class="icon-showcase">
+      <div class="big" id="bigIcon"></div>
+      <div class="name amh">የኔ ብር</div>
+      <div class="tag">Yene Birr — your money, your calendar</div>
+      <div class="tag" style="margin-top:6px;font-weight:700;opacity:.9;">Developed by Melaku Sisay</div>
+    </div>
+
+    <div class="sect settings-section-title"><h3>Money management</h3></div>
+    <div class="settings-list">
+      <button class="setting-action" onclick="go('budget')"><div class="ic-circle" id="moreBudgetIc"></div><div class="setting-action-copy"><div class="n">Budget</div><div class="sub">Set limits and track spending by category</div></div><span class="setting-chevron">›</span></button>
+      <button class="setting-action" onclick="go('categories')"><div class="ic-circle" id="moreCatIc"></div><div class="setting-action-copy"><div class="n">Categories</div><div class="sub">Organize income and expense types</div></div><span class="setting-chevron">›</span></button>
+      <button class="setting-action" onclick="go('debts')"><div class="ic-circle" id="moreDebtIc"></div><div class="setting-action-copy"><div class="n">Lend &amp; Borrow</div><div class="sub">Track money you lend or owe</div></div><span class="setting-chevron">›</span></button>
+    </div>
+
+    <div class="sect"><h3>Theme</h3></div>
+    <div class="card theme-card"><div class="theme-row" id="themeRow"></div></div>
+
+    <div class="sect"><h3>Preferences</h3></div>
+    <div class="card" style="padding:2px 15px;">
+      <div class="setting-row">
+        <div class="icon-circle" id="setGregIc" style="width:34px;height:34px;border-radius:11px;"></div>
+        <div class="txt"><div class="lbl">Show Gregorian date too</div><div class="sub">Alongside Ethiopian dates</div></div>
+        <div class="switch" id="swGreg" onclick="toggleGregorian()"><div class="knob"></div></div>
+      </div>
+      <div class="setting-row">
+        <div class="icon-circle" id="setExportIc" style="width:34px;height:34px;border-radius:11px;"></div>
+        <div class="txt"><div class="lbl">Export data</div><div class="sub">Download all transactions as CSV</div></div>
+        <div class="icon-btn sm" onclick="exportCSV()" id="exportBtn2"></div>
+      </div>
+      <div class="setting-row">
+        <div class="icon-circle" id="setImportIc" style="width:34px;height:34px;border-radius:11px;"></div>
+        <div class="txt"><div class="lbl">Import data</div><div class="sub">Restore transactions from CSV</div></div>
+        <div class="icon-btn sm" onclick="document.getElementById('importCsvInput').click()" id="importBtn2"></div>
+      </div>
+      <div class="setting-row">
+        <div class="icon-circle" id="setClearIc" style="width:34px;height:34px;border-radius:11px;"></div>
+        <div class="txt"><div class="lbl">Clear all transactions</div><div class="sub">Remove every recorded transaction</div></div>
+        <div class="icon-btn sm" onclick="clearAllTransactions()" id="clearBtn2"></div>
+      </div>
+      <div class="setting-row">
+        <div class="icon-circle" id="setResetIc" style="width:34px;height:34px;border-radius:11px;"></div>
+        <div class="txt"><div class="lbl">Reset app</div><div class="sub">Erase everything and start fresh</div></div>
+        <div class="icon-btn sm" onclick="resetApp()" id="resetBtn2"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ BUDGET ============ -->
+  <div class="screen" id="screen-budget">
+    <div class="topbar flush">
+      <div class="icon-btn" onclick="go('more')" id="budgetBackBtn"></div>
+      <div class="screen-title">Budget</div>
+      <div style="width:38px;"></div>
+    </div>
+    <div class="sect"><h3 id="budgetMonth">This month</h3></div>
+    <div class="card" id="budgetList"></div>
+  </div>
+
+  <!-- ============ CATEGORIES ============ -->
+  <div class="screen" id="screen-categories">
+    <div class="topbar flush">
+      <div class="icon-btn" onclick="go('more')" id="catBackBtn"></div>
+      <div class="screen-title">Categories</div>
+      <div class="icon-btn" onclick="openAddCategory()" id="catAddBtn"></div>
+    </div>
+    <div class="tabs">
+      <div class="tab active" id="catTabExpense" onclick="setCatTab('expense')">Expense</div>
+      <div class="tab" id="catTabIncome" onclick="setCatTab('income')">Income</div>
+    </div>
+    <div class="catgrid c3" id="catManageGrid"></div>
+  </div>
+
+  <!-- ============ CATEGORY DETAILS ============ -->
+  <div class="screen" id="screen-category-detail">
+    <div class="topbar flush">
+      <div class="icon-btn" onclick="go('analysis')" id="categoryDetailBack"></div>
+      <div class="screen-title" id="categoryDetailTitle">Category details</div>
+      <div style="width:38px;"></div>
+    </div>
+    <div class="card" id="categoryDetailList"></div>
+  </div>
+
+  <!-- ============ LEND & BORROW ============ -->
+  <div class="screen" id="screen-debts">
+    <div class="topbar flush">
+      <div class="icon-btn" onclick="go('more')" id="debtsBackBtn"></div>
+      <div class="screen-title">Lend &amp; Borrow</div>
+      <div style="width:38px;"></div>
+    </div>
+    <div class="sect"><h3>ያበደርኩት · Money I lent</h3><a onclick="openAddDebt('lent')" style="font-size:13px;font-weight:700;color:var(--accent);">+ Add</a></div>
+    <div class="card debt-card"><div class="debt-sum">Open: <strong id="debtLentSum">ብር 0</strong></div><div id="debtLentList"></div></div>
+    <div class="sect"><h3>የተበደርኩት · Money I borrowed</h3><a onclick="openAddDebt('borrowed')" style="font-size:13px;font-weight:700;color:var(--accent);">+ Add</a></div>
+    <div class="card debt-card"><div class="debt-sum">Open: <strong id="debtBorrowedSum">ብር 0</strong></div><div id="debtBorrowedList"></div></div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <div class="navbar">
+    <div class="navbtn active" data-s="home" onclick="go('home')" id="navHome"><div class="t">Home</div></div>
+    <div class="navbtn" data-s="calendar" onclick="go('calendar')" id="navCalendar"><div class="t">Calendar</div></div>
+    <div class="fab" onclick="openAdd('expense')" id="navFab"></div>
+    <div class="navbtn" data-s="ledger" onclick="go('ledger')" id="navLedger"><div class="t">Ledger</div></div>
+    <div class="navbtn" data-s="analysis" onclick="go('analysis')" id="navAnalysis"><div class="t">Analysis</div></div>
+  </div>
+</div>
+
+<!-- Add Transaction Sheet -->
+<div class="overlay" id="addOverlay">
+  <div class="sheet">
+    <div class="drag"></div>
+    <div class="sheet-head"><h3 id="addSheetTitle">New transaction</h3><div class="icon-btn sm" onclick="closeAdd()" id="addCloseBtn"></div></div>
+    <div class="type-toggle three">
+      <div class="t" id="typeExpense" onclick="setAddType('expense')">Expense</div>
+      <div class="t" id="typeIncome" onclick="setAddType('income')">Income</div>
+      <div class="t" id="typeTransfer" onclick="setAddType('transfer')">Transfer</div>
+    </div>
+    <div class="amount-display">
+      <div class="cur">ETB · ብር</div>
+      <div class="val" id="addAmountDisplay">0</div>
+    </div>
+    <div class="quickamts">
+      <div class="qa" onclick="setAmt(50)">+50</div>
+      <div class="qa" onclick="setAmt(100)">+100</div>
+      <div class="qa" onclick="setAmt(500)">+500</div>
+      <div class="qa" onclick="setAmt(1000)">+1000</div>
+    </div>
+    <div class="keypad" id="keypad"></div>
+    <div class="field" id="addCatField"><label>Category</label><div class="catgrid" id="addCatGrid"></div></div>
+    <div class="field"><label id="addFromLabel">Account</label><div class="chiprow" id="addAccChips"></div></div>
+    <div class="field" id="addToAccField" style="display:none;"><label>To account</label><div class="chiprow" id="addToAccChips"></div></div>
+    <div class="field">
+      <label>Date · <span id="addDateLabel"></span></label>
+      <div style="display:flex; gap:8px;">
+        <select class="input" id="addDateMonth"></select>
+        <select class="input" id="addDateDay" style="max-width:80px;"></select>
+        <input class="input" type="number" id="addDateYear" style="max-width:90px;">
+      </div>
+    </div>
+    <div class="field"><label>Note (optional)</label><input class="input" id="addNote" placeholder="e.g. Buna at Tomoca"></div>
+    <div class="btn" id="addSaveBtn" onclick="saveTransaction()">Save transaction</div>
+    <div class="btn danger" id="addDeleteBtn" onclick="deleteTransaction()" style="display:none;margin-top:8px;background:var(--danger);color:#fff;">Delete transaction</div>
+  </div>
+</div>
+
+<!-- Add Account Sheet -->
+<div class="overlay" id="accOverlay">
+  <div class="sheet">
+    <div class="drag"></div>
+    <div class="sheet-head"><h3 id="accSheetTitle">New account</h3><div class="icon-btn sm" onclick="closeSheet('accOverlay')" id="accCloseBtn"></div></div>
+    <div class="field"><label>Name</label><input class="input" id="accName" placeholder="e.g. Awash Bank"></div>
+    <div class="field"><label>Icon</label><div class="catgrid c6" id="accIconGrid"></div></div>
+    <div class="field"><label>Starting balance</label><input class="input" type="number" id="accStart" placeholder="0.00"></div>
+    <div class="setting-row" style="padding:8px 0;margin:4px 0;">
+      <div class="txt"><div class="lbl">Saving goal account</div><div class="sub">Transfers here count as saved</div></div>
+      <div class="switch" id="accSavingToggle" data-on="0" onclick="toggleAccSaving()"><div class="knob"></div></div>
+    </div>
+    <div id="accGoalsFields" style="display:none;">
+      <div class="field"><label>Monthly saving goal</label><input class="input" type="number" id="accMonthlyGoal" placeholder="e.g. 2000"></div>
+      <div class="field"><label>Yearly saving goal</label><input class="input" type="number" id="accYearlyGoal" placeholder="e.g. 24000"></div>
+    </div>
+    <div class="setting-row account-dashboard-setting">
+      <div class="txt"><div class="lbl">Show on Home dashboard</div><div class="sub">Include this account in the dashboard total</div></div>
+      <div class="switch on" id="accDashboardSwitch" onclick="toggleAccountDashboard()"><div class="knob"></div></div>
+    </div>
+    <div class="btn" id="accSaveBtn" onclick="saveAccount()">Add account</div>
+    <div class="btn danger" id="accDeleteBtn" onclick="deleteAccount()" style="display:none;margin-top:8px;background:var(--danger);color:#fff;">Delete account</div>
+  </div>
+</div>
+
+<!-- Add Category Sheet -->
+<div class="overlay" id="catOverlay">
+  <div class="sheet">
+    <div class="drag"></div>
+    <div class="sheet-head"><h3>New category</h3><div class="icon-btn sm" onclick="closeSheet('catOverlay')" id="catCloseBtn"></div></div>
+    <div class="type-toggle">
+      <div class="t" id="catTypeExpense" onclick="setCatType('expense')">Expense</div>
+      <div class="t" id="catTypeIncome" onclick="setCatType('income')">Income</div>
+    </div>
+    <div class="field"><label>Name</label><input class="input" id="catName" placeholder="e.g. Rent"></div>
+    <div class="field"><label>Icon</label><div class="catgrid c6" id="catIconGrid"></div></div>
+    <div class="field"><label>Color</label><div class="catgrid c6" id="catColorGrid"></div></div>
+    <div class="btn" onclick="saveCategory()">Add category</div>
+  </div>
+</div>
+
+<!-- Debt sheet -->
+<div class="overlay" id="debtOverlay">
+  <div class="sheet">
+    <div class="drag"></div>
+    <div class="sheet-head"><h3 id="debtSheetTitle">Debt</h3><div class="icon-btn sm" onclick="closeSheet('debtOverlay')" id="debtCloseBtn"></div></div>
+    <input type="hidden" id="debtKind" value="lent">
+    <div class="field"><label>Person</label><input class="input" id="debtPerson" placeholder="Name"></div>
+    <div class="field"><label>Amount (ETB)</label><input class="input" type="number" id="debtAmount" placeholder="0.00"></div>
+    <div class="field"><label>Account</label><div class="chiprow" id="debtAccChips"></div></div>
+    <div class="field"><label>Date (Eth y-m-d)</label><input class="input" id="debtDate" placeholder="2018-2-15"></div>
+    <div class="field"><label>Note</label><input class="input" id="debtNote" placeholder="optional"></div>
+    <div class="btn" onclick="saveDebt()">Save</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<input id="importCsvInput" type="file" accept=".csv,text/csv" style="display:none" onchange="importCSV(event)">
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>
