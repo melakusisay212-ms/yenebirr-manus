@@ -1,0 +1,154 @@
+# Yene Birr — Build Android debug APK
+# Forces appId = app.yenebirr and app name = yenebirr
+name: Build Android APK
+
+on:
+  push:
+    branches: [main, master]
+    tags: ['v*']
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build debug APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Setup Java (Temurin 17)
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      # ← FIXED: no longer use the broken android-actions/setup-android
+      - name: Setup Android SDK
+        run: |
+          # ANDROID_HOME is already set on GitHub runners
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+
+          # Accept all licenses
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+
+          # Install only what we need
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
+            "platform-tools" \
+            "platforms;android-34" \
+            "build-tools;34.0.0"
+
+          # Make sure the tools are in PATH
+          echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
+          echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> $GITHUB_PATH
+
+      - name: Install npm dependencies
+        run: npm ci || npm install
+
+      - name: Build web assets (Vite)
+        run: npm run build
+
+      - name: Force Capacitor appId + appName
+        run: |
+          if [ -f capacitor.config.ts ]; then
+            sed -i 's/appId:.*$/appId: "app.yenebirr",/' capacitor.config.ts
+            sed -i 's/appName:.*$/appName: "yenebirr",/' capacitor.config.ts
+          fi
+
+          if [ -f capacitor.config.json ]; then
+            node -e '
+              const fs = require("fs");
+              const config = JSON.parse(fs.readFileSync("capacitor.config.json", "utf8"));
+              config.appId = "app.yenebirr";
+              config.appName = "yenebirr";
+              fs.writeFileSync("capacitor.config.json", JSON.stringify(config, null, 2));
+            '
+          fi
+
+          echo "Capacitor config updated:"
+          cat capacitor.config.ts 2>/dev/null || cat capacitor.config.json 2>/dev/null || true
+
+      - name: Add Android platform if missing
+        run: |
+          if [ ! -d android ]; then
+            npx cap add android
+          fi
+
+      - name: Sync Capacitor (copy web → android)
+        run: npx cap sync android
+
+      - name: Force Android applicationId + app name
+        run: |
+          if [ -f android/app/build.gradle ]; then
+            sed -i 's/applicationId .*/applicationId "app.yenebirr"/' android/app/build.gradle
+            sed -i 's/namespace .*/namespace "app.yenebirr"/' android/app/build.gradle
+          fi
+
+          STRINGS="android/app/src/main/res/values/strings.xml"
+          if [ -f "$STRINGS" ]; then
+            if grep -q 'name="app_name"' "$STRINGS"; then
+              sed -i 's/<string name="app_name">.*<\/string>/<string name="app_name">yenebirr<\/string>/' "$STRINGS"
+            else
+              sed -i 's|</resources>|    <string name="app_name">yenebirr</string>\n</resources>|' "$STRINGS"
+            fi
+          fi
+
+          echo "=== applicationId / namespace ==="
+          grep -E 'applicationId|namespace' android/app/build.gradle || true
+          echo "=== app_name ==="
+          grep 'app_name' "$STRINGS" || true
+
+      - name: Copy launcher icons into Android res
+        run: |
+          if [ -f scripts/setup-native-plugin.cjs ]; then
+            node scripts/setup-native-plugin.cjs || true
+          fi
+          RES=android/app/src/main/res
+          if [ -d "$RES" ] && [ -d public/icons ]; then
+            mkdir -p "$RES"/mipmap-{mdpi,hdpi,xhdpi,xxhdpi,xxxhdpi}
+            [ -f public/icons/icon-48.png ]  && cp public/icons/icon-48.png  "$RES/mipmap-mdpi/ic_launcher.png"       && cp public/icons/icon-48.png  "$RES/mipmap-mdpi/ic_launcher_round.png"
+            [ -f public/icons/icon-72.png ]  && cp public/icons/icon-72.png  "$RES/mipmap-hdpi/ic_launcher.png"       && cp public/icons/icon-72.png  "$RES/mipmap-hdpi/ic_launcher_round.png"
+            [ -f public/icons/icon-96.png ]  && cp public/icons/icon-96.png  "$RES/mipmap-xhdpi/ic_launcher.png"      && cp public/icons/icon-96.png  "$RES/mipmap-xhdpi/ic_launcher_round.png"
+            [ -f public/icons/icon-144.png ] && cp public/icons/icon-144.png "$RES/mipmap-xxhdpi/ic_launcher.png"     && cp public/icons/icon-144.png "$RES/mipmap-xxhdpi/ic_launcher_round.png"
+            [ -f public/icons/icon-192.png ] && cp public/icons/icon-192.png "$RES/mipmap-xxxhdpi/ic_launcher.png"    && cp public/icons/icon-192.png "$RES/mipmap-xxxhdpi/ic_launcher_round.png"
+          fi
+
+      - name: Make gradlew executable
+        run: chmod +x android/gradlew
+
+      - name: Build debug APK
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Locate APK
+        id: apk
+        run: |
+          APK=$(find android/app/build/outputs/apk -name '*.apk' | head -n 1)
+          echo "path=$APK" >> "$GITHUB_OUTPUT"
+          echo "Found: $APK"
+          ls -la "$APK"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: yenebirr-debug-apk
+          path: ${{ steps.apk.outputs.path }}
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload APK on tag
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: actions/upload-artifact@v4
+        with:
+          name: yenebirr-${{ github.ref_name }}-apk
+          path: ${{ steps.apk.outputs.path }}
+          retention-days: 90
